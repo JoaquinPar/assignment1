@@ -34,22 +34,16 @@ async function connectToMongoDB() {
 }
 connectToMongoDB();
 
-// let mongoDBConnection = new MongoClient(atlasURI, {});
-// const users = database.db(process.env.MONGODB_DATABASE).collection('users');
-// let mongoStore = MongoStore.create({
-//     mongoUrl: atlasURI,
-//     crypto: {
-//         secret: process.env.MONGODB_SESSION_SECRET
-//     }
-// })
-
 app.use(session({
     secret: process.env.NODE_SESSION_SECRET,
     saveUninitialized: false,
     resave: true,
     store: new MongoStore({
         mongoUrl: atlasURI,
-        autoRemove: 'native'
+        autoRemove: 'native',
+        crypto: {
+            secret: process.env.MONGODB_SESSION_SECRET
+        }
     })
 }
 ));
@@ -147,36 +141,43 @@ app.post('/login', async (req, res) => {
 
     let username;
     let password;
+    let found = false;
 
     await database.collection('users').findOne({email: req.body.email}).then((user) => {
         if (!user) {
             req.session.authenticated = false;
             req.session.loginFailed = 'email';
+
             return res.redirect('/login');
         } else {
             password = user.password;
             username = user.username;
+            found = true;
         }
     });
-
-    if (await bcrypt.compare(req.body.password, password)) {
-        req.session.authenticated = true;
-        req.session.username = username;
-        req.session.cookie.expires = 3600000;
-        delete req.session.loginFailed;
-        return res.redirect('/members');
-    } else {
-        req.session.authenticated = false;
-        req.session.loginFailed = 'password';
-        return res.redirect('/login');
-    }
-
     
+    if (found) {
+        if (await bcrypt.compare(req.body.password, password)) {
+            console.log("hello");
+            req.session.authenticated = true;
+            req.session.username = username;
+            req.session.cookie.expires = 3600000;
+            delete req.session.loginFailed;
+            return res.redirect('/members');
+        } else {
+            console.log("goodbye");
+            req.session.authenticated = false;
+            req.session.loginFailed = 'password';
+            return res.redirect('/login');
+        }
+    }
 });
 
 app.get('/*splat', (req, res) => {
     res.status(404);
-    res.send('404 Not Found');
+    res.render('notFound', {
+        picture: "/images/notFound.jpg"
+    });
 });
 
 app.listen(port, () => {
