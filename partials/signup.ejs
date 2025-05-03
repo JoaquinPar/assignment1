@@ -5,3 +5,10 @@
     <input type="password" placeholder="Password" name="password" required><br>
     <button type="submit">Submit</button>
 </form>
+
+<% if (error.userFound) { %>
+    <p>User found, please log in</p>
+    <form method="GET" action="login">
+        <button type="submit">Login</button>
+    </form>
+<% } %>

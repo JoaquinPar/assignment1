@@ -61,10 +61,19 @@ app.get('/', (req, res) => {
 });
 
 app.get('/signup', (req, res) => {
-    res.render('index', {title: "Sign up", filename: '../partials/signup'});
+    res.render('index', {
+        title: "Sign up",
+        filename: '../partials/signup',
+        error: { userFound: req.session.loginFailed }
+    });
 });
 
 app.get('/login', (req, res) => {
+
+    if (req.session.loginFailed == true) {
+        delete req.session.loginFailed;
+    }
+
     res.render('index', {
         title: "Login",
         filename: '../partials/login',
@@ -111,19 +120,34 @@ app.post('/signup', async (req, res) => {
         return;
     }
 
-    let hashedPassword = await bcrypt.hash(req.body.password, 12);
+    let notFound = false;
 
-    database.collection('users').insertOne({
-        username: req.body.username,
-        email: req.body.email,
-        password: hashedPassword
+    await database.collection('users').findOne({email: req.body.email}).then((user) => {
+        if (!user) {
+            notFound = true;
+        } else {
+            req.session.authenticated = false;
+            req.session.loginFailed = true;
+
+            return res.redirect('/signup');
+        }
     });
 
-    req.session.username = req.body.username;
-    req.session.authenticated = true;
-    req.session.cookie.expires = 3600000;
-
-    res.redirect('/members');
+    if (notFound) {
+        let hashedPassword = await bcrypt.hash(req.body.password, 12);
+    
+        database.collection('users').insertOne({
+            username: req.body.username,
+            email: req.body.email,
+            password: hashedPassword
+        });
+    
+        req.session.username = req.body.username;
+        req.session.authenticated = true;
+        req.session.cookie.expires = 3600000;
+    
+        res.redirect('/members');
+    }
 });
 
 app.post('/login', async (req, res) => {
@@ -158,14 +182,12 @@ app.post('/login', async (req, res) => {
     
     if (found) {
         if (await bcrypt.compare(req.body.password, password)) {
-            console.log("hello");
             req.session.authenticated = true;
             req.session.username = username;
             req.session.cookie.expires = 3600000;
             delete req.session.loginFailed;
             return res.redirect('/members');
         } else {
-            console.log("goodbye");
             req.session.authenticated = false;
             req.session.loginFailed = 'password';
             return res.redirect('/login');
