@@ -127,7 +127,7 @@ app.post('/signup', async (req, res) => {
             notFound = true;
         } else {
             req.session.authenticated = false;
-            req.session.loginFailed = true;
+            req.session.loginFailed = 'true';
 
             return res.redirect('/signup');
         }
@@ -170,8 +170,7 @@ app.post('/login', async (req, res) => {
     await database.collection('users').findOne({email: req.body.email}).then((user) => {
         if (!user) {
             req.session.authenticated = false;
-            req.session.loginFailed = true;
-
+            req.session.loginFailed = 'email';
             return res.redirect('/login');
         } else {
             password = user.password;
@@ -189,7 +188,7 @@ app.post('/login', async (req, res) => {
             return res.redirect('/members');
         } else {
             req.session.authenticated = false;
-            req.session.loginFailed = true;
+            req.session.loginFailed = 'password';
             return res.redirect('/login');
         }
     }

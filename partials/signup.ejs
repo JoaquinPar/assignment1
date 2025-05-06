@@ -6,7 +6,7 @@
     <button type="submit">Submit</button>
 </form>
 
-<% if (error.userFound) { %>
+<% if (error.userFound == 'true') { %>
     <p>User found, please log in</p>
     <form method="GET" action="login">
         <button type="submit">Login</button>

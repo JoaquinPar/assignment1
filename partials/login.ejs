@@ -5,6 +5,8 @@
     <button type="submit">Submit</button>
 </form>
 
-<% if (error.name != undefined) { %>
-    <p>Incorrect email/password combination</p>
+<% if (error.name == 'email') { %>
+    <p>No account exists under that email</p>
+<% } else if (error.name == 'password') { %>
+    <p>Invalid email/password combination</p>
 <% }; %>
