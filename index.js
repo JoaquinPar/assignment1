@@ -170,7 +170,7 @@ app.post('/login', async (req, res) => {
     await database.collection('users').findOne({email: req.body.email}).then((user) => {
         if (!user) {
             req.session.authenticated = false;
-            req.session.loginFailed = 'email';
+            req.session.loginFailed = true;
 
             return res.redirect('/login');
         } else {
@@ -189,7 +189,7 @@ app.post('/login', async (req, res) => {
             return res.redirect('/members');
         } else {
             req.session.authenticated = false;
-            req.session.loginFailed = 'password';
+            req.session.loginFailed = true;
             return res.redirect('/login');
         }
     }
